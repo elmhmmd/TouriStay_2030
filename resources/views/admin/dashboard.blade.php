@@ -88,6 +88,48 @@
                     </div>
                 </div>
             </section>
+            <!-- Add Types of Logements -->
+<section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
+    <h2 class="text-2xl font-semibold mb-4">Add Types of Logements 🏠</h2>
+    <p class="mb-4 text-touristay-white opacity-80">Add multiple types of logements (e.g., Apartment, House, Villa) for proprietaire listings.</p>
+    @if (session('type_success'))
+        <p class="text-touristay-green mb-4">{{ session('type_success') }}</p>
+    @endif
+    <form action="{{ route('types.store') }}" method="POST">
+        @csrf
+        <div class="mb-4">
+            <label for="types" class="block text-lg">Types (one per line)</label>
+            <textarea id="types" name="types" rows="5" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" placeholder="Apartment&#10;House&#10;Villa&#10;Cottage"></textarea>
+            @error('types') <span class="text-touristay-red">{{ $message }}</span> @enderror
+        </div>
+        <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+            Add Types
+        </button>
+    </form>
+
+    <!-- Display Existing Types -->
+    <div class="mt-6">
+        <h3 class="text-xl font-semibold mb-2">Existing Types</h3>
+        @if ($types->isEmpty())
+            <p class="text-touristay-white opacity-80">No types of logements added yet.</p>
+        @else
+            <ul class="space-y-2">
+                @foreach ($types as $type)
+                    <li class="flex justify-between items-center bg-gray-800 p-4 rounded-lg">
+                        <span>{{ $type->name }}</span>
+                        <form action="{{ route('types.destroy', $type->id) }}" method="POST" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="bg-touristay-red hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-1 rounded-lg transition duration-300">
+                                Delete
+                            </button>
+                        </form>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
+</section>
         </main>
 
         <!-- Footer -->

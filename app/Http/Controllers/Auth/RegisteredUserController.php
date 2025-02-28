@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Contracts\View\View;
 
 class RegisteredUserController extends Controller
 {
@@ -48,7 +49,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
         Auth::login($user);
 
-        // Temporary redirect until we set up role-based logic
+        
         return redirect('/dashboard');
     }
 }

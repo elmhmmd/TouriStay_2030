@@ -11,13 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('listings', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->text('description');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
-        });
+            Schema::create('annonces', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->foreignId('type_de_logement_id')->constrained()->onDelete('set null');
+                $table->string('location');
+                $table->decimal('price', 8, 2);
+                $table->string('image')->nullable();
+                $table->date('available_until');
+                $table->timestamps();
+            });
     }
 
     /**
