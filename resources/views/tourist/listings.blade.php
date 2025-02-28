@@ -34,44 +34,24 @@
 
         <!-- Main Content -->
         <main class="flex-grow max-w-7xl mx-auto p-6 space-y-8">
-            <!-- Filter Section -->
+            <!-- Search Bar Section -->
             <section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-semibold mb-4">Find Your Stay 🌍</h2>
-                <form method="GET" action="{{ route('tourist.listings') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label for="location" class="block text-lg">Location</label>
-                        <input id="location" name="location" value="{{ request('location') }}" placeholder="e.g., Paris" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green">
+                <form method="GET" action="{{ route('tourist.listings') }}" class="flex gap-4">
+                    <div class="flex-grow">
+                        <input id="search" name="search" value="{{ request('search') }}" placeholder="Search by location, price, type..." class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green">
                     </div>
-                    <div>
-                        <label for="min_price" class="block text-lg">Min Price</label>
-                        <input id="min_price" name="min_price" type="number" step="0.01" value="{{ request('min_price') }}" placeholder="e.g., 50" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green">
-                    </div>
-                    <div>
-                        <label for="max_price" class="block text-lg">Max Price</label>
-                        <input id="max_price" name="max_price" type="number" step="0.01" value="{{ request('max_price') }}" placeholder="e.g., 200" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green">
-                    </div>
-                    <div>
-                        <label for="type_de_logement_id" class="block text-lg">Type</label>
-                        <select id="type_de_logement_id" name="type_de_logement_id" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green">
-                            <option value="">All Types</option>
-                            @foreach ($types as $type)
-                                <option value="{{ $type->id }}" {{ request('type_de_logement_id') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-4 flex justify-end">
-                        <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
-                            Filter
-                        </button>
-                    </div>
+                    <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+                        Search
+                    </button>
                 </form>
             </section>
 
             <!-- Listings Section -->
             <section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4">Available Listings 🏡</h2>
+                <h2 class="text-2xl font-semibold mb-4">Available Listings 🏡 ({{ $listings->total() }})</h2>
                 @if ($listings->isEmpty())
-                    <p class="text-touristay-white opacity-80">No listings match your criteria.</p>
+                    <p class="text-touristay-white opacity-80">No listings match your search.</p>
                 @else
                     <div class="space-y-4">
                         @foreach ($listings as $listing)
@@ -93,12 +73,16 @@
                                     </div>
                                 </div>
                                 <div class="space-x-2">
-                                    <a href="{{ route('tourist.book', $listing->id) }}" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
-                                        Book Now
-                                    </a>
+                                <a href="{{ route('tourist.book.form', $listing->id) }}" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+    Book Now
+</a>
                                 </div>
                             </div>
                         @endforeach
+                    </div>
+                    <!-- Pagination Links -->
+                    <div class="mt-6">
+                        {{ $listings->links() }}
                     </div>
                 @endif
             </section>

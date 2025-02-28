@@ -9,39 +9,35 @@ use Illuminate\Support\Facades\Auth;
 class TouristController extends Controller
 {
     public function index()
-{
-    $user = auth()->user()->load('bookings.annonce.typeDeLogement', 'bookings.annonce.equipements');
-    return view('dashboards.tourist', compact('user'));
-}
+    {
+        return view('toursist.dashboard');
+    }
 
     public function listings(Request $request)
-    {
-        $query = Annonce::query()
-            ->with(['typeDeLogement', 'equipements'])
-            ->where('available_until', '>=', now()->toDateString());
+{
+    $query = Annonce::query()
+        ->with(['typeDeLogement', 'equipements'])
+        ->where('available_until', '>=', now()->toDateString());
 
-        // Apply filters
-        if ($request->filled('location')) {
-            $query->where('location', 'like', '%' . $request->input('location') . '%');
-        }
+    // Apply fuzzy search across multiple fields
+    if ($request->filled('search')) {
+        $searchTerm = $request->input('search');
 
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->input('min_price'));
-        }
-
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->input('max_price'));
-        }
-
-        if ($request->filled('type_de_logement_id')) {
-            $query->where('type_de_logement_id', $request->input('type_de_logement_id'));
-        }
-
-        $listings = $query->get();
-        $types = \App\Models\TypeDeLogement::all();
-
-        return view('tourist.listings', compact('listings', 'types'));
+        $query->where(function ($q) use ($searchTerm) {
+            $q->where('location', 'like', '%' . $searchTerm . '%')
+              ->orWhere('price', 'like', '%' . $searchTerm . '%')
+              ->orWhereHas('typeDeLogement', function ($q) use ($searchTerm) {
+                  $q->where('name', 'like', '%' . $searchTerm . '%');
+              });
+        });
     }
+
+    // Paginate results (10 per page)
+    $listings = $query->paginate(10)->appends($request->only('search')); // Keep search term in pagination links
+    $types = \App\Models\TypeDeLogement::all();
+
+    return view('tourist.listings', compact('listings', 'types'));
+}
 
     public function book($id)
     {
@@ -50,35 +46,42 @@ class TouristController extends Controller
     }
 
     public function storeBooking(Request $request)
-    {
-        $request->validate([
-            'annonce_id' => 'required|exists:annonces,id',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after:start_date',
-        ]);
+{
+    $request->validate([
+        'annonce_id' => 'required|exists:annonces,id',
+        'start_date' => 'required|date|after_or_equal:today',
+        'end_date' => 'required|date|after:start_date',
+    ]);
 
-        $listing = Annonce::findOrFail($request->annonce_id);
+    $listing = Annonce::findOrFail($request->annonce_id);
 
-        if ($request->end_date > $listing->available_until) {
-            return redirect()->back()->withErrors(['end_date' => 'End date cannot be after the listing\'s available until date.']);
-        }
-
-        $start = \Carbon\Carbon::parse($request->start_date);
-        $end = \Carbon\Carbon::parse($request->end_date);
-        $nights = $end->diffInDays($start);
-        $totalPrice = $listing->price * $nights;
-
-        Booking::create([
-            'user_id' => Auth::id(),
-            'annonce_id' => $request->annonce_id,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'total_price' => $totalPrice,
-        ]);
-
-        return redirect()->route('tourist.dashboard')->with('success', 'Booking created successfully.');
+    // Check if end_date is before available_until
+    if ($request->end_date > $listing->available_until) {
+        return redirect()->back()->withErrors(['end_date' => 'End date cannot be after the listing\'s available until date.']);
     }
 
+    // Calculate total price (price per night × number of nights)
+    $start = \Carbon\Carbon::parse($request->start_date);
+    $end = \Carbon\Carbon::parse($request->end_date);
+
+    // Ensure the difference is always positive
+    $nights = $start->diffInDays($end, true);
+    if ($start->gt($end)) { // Additional safety check
+        return redirect()->back()->withErrors(['end_date' => 'End date must be after start date.']);
+    }
+
+    $totalPrice = $listing->price * $nights;
+
+    Booking::create([
+        'user_id' => Auth::id(),
+        'annonce_id' => $request->annonce_id,
+        'start_date' => $request->start_date,
+        'end_date' => $request->end_date,
+        'total_price' => $totalPrice,
+    ]);
+
+    return redirect()->route('tourist.dashboard')->with('success', 'Booking created successfully.');
+}
     public function cancelBooking($id)
     {
         $booking = Booking::where('user_id', Auth::id())->findOrFail($id);

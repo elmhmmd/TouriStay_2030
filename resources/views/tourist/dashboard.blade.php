@@ -39,48 +39,48 @@
         <main class="flex-grow max-w-7xl mx-auto p-6 space-y-8">
             <!-- Welcome Section -->
             <div class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
-            <h2 class="text-2xl font-semibold mb-2">Welcome, {{ $user->name }}!</h2>
+                <h2 class="text-2xl font-semibold mb-2">Welcome, {{ auth()->user()->name }}!</h2>
                 <p class="text-touristay-white opacity-80">You’re a Tourist on TouriStay. Explore and book your next stay!</p>
             </div>
 
-           <!-- Manage Bookings Section -->
-<section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
-    <h2 class="text-2xl font-semibold mb-4">Your Bookings 📅</h2>
-    @if (!isset($user->bookings) || $user->bookings->isEmpty())
-        <p class="text-touristay-white opacity-80">You haven’t booked any listings yet. <a href="{{ route('tourist.listings') }}" class="text-touristay-green hover:underline">Browse listings</a> to find your next stay!</p>
-    @else
-        <div class="space-y-4">
-            @foreach ($user->bookings as $booking)
-                <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg">
-                    <div class="flex items-center space-x-4">
-                        @if ($booking->annonce->image)
-                            <img src="{{ Storage::url($booking->annonce->image) }}" alt="{{ $booking->annonce->location }}" class="w-16 h-16 object-cover rounded-lg">
-                        @else
-                            <div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center text-sm">No Image</div>
-                        @endif
-                        <div>
-                            <h3 class="text-lg font-medium">{{ $booking->annonce->location }}</h3>
-                            <p class="text-sm opacity-80">
-                                Type: {{ $booking->annonce->typeDeLogement->name }} | 
-                                Dates: {{ $booking->start_date->format('Y-m-d') }} to {{ $booking->end_date->format('Y-m-d') }} | 
-                                Total: ${{ $booking->total_price }}
-                            </p>
-                        </div>
+            <!-- Manage Bookings Section -->
+            <section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4">Your Bookings 📅</h2>
+                @if (auth()->user()->bookings->isEmpty())
+                    <p class="text-touristay-white opacity-80">You haven’t booked any listings yet. <a href="{{ route('tourist.listings') }}" class="text-touristay-green hover:underline">Browse listings</a> to find your next stay!</p>
+                @else
+                    <div class="space-y-4">
+                        @foreach (auth()->user()->bookings as $booking)
+                            <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg">
+                                <div class="flex items-center space-x-4">
+                                    @if ($booking->annonce->image)
+                                        <img src="{{ Storage::url($booking->annonce->image) }}" alt="{{ $booking->annonce->location }}" class="w-16 h-16 object-cover rounded-lg">
+                                    @else
+                                        <div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center text-sm">No Image</div>
+                                    @endif
+                                    <div>
+                                        <h3 class="text-lg font-medium">{{ $booking->annonce->location }}</h3>
+                                        <p class="text-sm opacity-80">
+                                            Type: {{ $booking->annonce->typeDeLogement->name }} | 
+                                            Dates: {{ $booking->start_date->format('Y-m-d') }} to {{ $booking->end_date->format('Y-m-d') }} | 
+                                            Total: ${{ $booking->total_price }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="space-x-2">
+                                    <form action="{{ route('tourist.bookings.cancel', $booking->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-touristay-red hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="space-x-2">
-                        <form action="{{ route('tourist.bookings.cancel', $booking->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="bg-touristay-red hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
-                                Cancel
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    @endif
-</section>
+                @endif
+            </section>
         </main>
 
         <!-- Footer -->

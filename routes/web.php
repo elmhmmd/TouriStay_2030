@@ -22,9 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/types', [App\Http\Controllers\TypeDeLogementController::class, 'store'])->name('types.store');
     Route::delete('/types/{id}', [App\Http\Controllers\TypeDeLogementController::class, 'destroy'])->name('types.destroy');
 
-    Route::get('/tourist/listings', [App\Http\Controllers\TouristController::class, 'index'])->name('tourist.listings');
-    Route::get('/tourist/book/{id}', [App\Http\Controllers\TouristController::class, 'book'])->name('tourist.book');
-    Route::post('/tourist/book', [App\Http\Controllers\TouristController::class, 'storeBooking'])->name('tourist.book');
+    Route::get('/tourist/listings', [App\Http\Controllers\TouristController::class, 'listings'])->name('tourist.listings');
+    Route::get('/tourist/book/{id}', [App\Http\Controllers\TouristController::class, 'book'])->name('tourist.book.form');
+    Route::post('/tourist/book', [App\Http\Controllers\TouristController::class, 'storeBooking'])->name('tourist.book.store');
     Route::delete('/tourist/bookings/{id}', [App\Http\Controllers\TouristController::class, 'cancelBooking'])->name('tourist.bookings.cancel');
 });
 

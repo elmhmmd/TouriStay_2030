@@ -54,25 +54,25 @@
                 </div>
 
                 <!-- Booking Form -->
-                <form action="{{ route('tourist.book') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="annonce_id" value="{{ $listing->id }}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label for="start_date" class="block text-lg">Start Date</label>
-                            <input id="start_date" name="start_date" type="date" value="{{ old('start_date') }}" min="{{ now()->toDateString() }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
-                            @error('start_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
-                        </div>
-                        <div>
-                            <label for="end_date" class="block text-lg">End Date</label>
-                            <input id="end_date" name="end_date" type="date" value="{{ old('end_date') }}" max="{{ $listing->available_until ? $listing->available_until->toDateString() : '' }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
-                            @error('end_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
-                        Confirm Booking
-                    </button>
-                </form>
+                <form action="{{ route('tourist.book.store') }}" method="POST">
+    @csrf
+    <input type="hidden" name="annonce_id" value="{{ $listing->id }}">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+            <label for="start_date" class="block text-lg">Start Date</label>
+            <input id="start_date" name="start_date" type="date" value="{{ old('start_date') }}" min="{{ now()->toDateString() }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
+            @error('start_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
+        </div>
+        <div>
+            <label for="end_date" class="block text-lg">End Date</label>
+            <input id="end_date" name="end_date" type="date" value="{{ old('end_date') }}" max="{{ $listing->available_until ? $listing->available_until->toDateString() : '' }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
+            @error('end_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
+        </div>
+    </div>
+    <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+        Confirm Booking
+    </button>
+</form>
             </section>
         </main>
 
