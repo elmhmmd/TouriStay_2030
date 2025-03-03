@@ -11,16 +11,31 @@ use Illuminate\Support\Facades\Storage;
 class AnnonceController extends Controller
 {
     public function index()
-    {
-        $annonces = Annonce::where('user_id', Auth::id())->with(['typeDeLogement', 'equipements'])->get();
-        $equipements = Equipement::all();
-        $types = TypeDeLogement::all();
-        if (Auth::user()->role->name === 'admin') {
-            return view('dashboards.admin', compact('annonces', 'equipements', 'types'));
-        }
-        return view('proprietaire.dashboard', compact('annonces', 'equipements', 'types'));
+{
+    $annonces = Annonce::where('user_id', Auth::id())
+        ->with(['typeDeLogement', 'equipements'])
+        ->get();
+
+    // Fetch bookings for the proprietaire's listings
+    $bookings = Annonce::where('user_id', Auth::id())
+        ->with(['bookings.user'])
+        ->get()
+        ->flatMap->bookings;
+
+    // Fetch notifications for the proprietaire
+    $user = Auth::user();
+    $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
+    $unreadNotifications = $user->unreadNotifications()->orderBy('created_at', 'desc')->get();
+
+    $equipements = Equipement::all();
+    $types = TypeDeLogement::all();
+
+    if (Auth::user()->role->name === 'admin') {
+        return view('dashboards.admin', compact('annonces', 'equipements', 'types'));
     }
 
+    return view('dashboards.proprietaire', compact('annonces', 'equipements', 'types', 'bookings', 'notifications', 'unreadNotifications'));
+}
     public function store(Request $request)
     {
         $request->validate([

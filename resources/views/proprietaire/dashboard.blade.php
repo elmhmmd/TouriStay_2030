@@ -37,15 +37,12 @@
             <!-- Welcome Section -->
             <div class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-semibold mb-2">Welcome, {{ auth()->user()->name }}!</h2>
-                <p class="text-touristay-white opacity-80">Manage your listings as a Proprietaire on TouriStay.</p>
+                <p class="text-touristay-white opacity-80">You’re a Proprietaire on TouriStay. Manage your listings and bookings below!</p>
             </div>
 
-            <!-- Add New Listing -->
+            <!-- Add Listing Form -->
             <section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4">Add New Listing 🏡</h2>
-                @if (session('success'))
-                    <p class="text-touristay-green mb-4">{{ session('success') }}</p>
-                @endif
+                <h2 class="text-2xl font-semibold mb-4">Add a New Listing 🏡</h2>
                 <form action="{{ route('annonces.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -75,10 +72,10 @@
                         </div>
                     </div>
                     <div class="mb-4">
-    <label for="available_until" class="block text-lg">Available Until</label>
-    <input id="available_until" name="available_until" type="date" value="{{ old('available_until') }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
-    @error('available_until') <span class="text-touristay-red">{{ $message }}</span> @enderror
-</div>
+                        <label for="available_until" class="block text-lg">Available Until</label>
+                        <input id="available_until" name="available_until" type="date" value="{{ old('available_until') }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
+                        @error('available_until') <span class="text-touristay-red">{{ $message }}</span> @enderror
+                    </div>
                     <div class="mb-4">
                         <label class="block text-lg">Equipment</label>
                         @foreach ($equipements as $equipement)
@@ -95,11 +92,11 @@
                 </form>
             </section>
 
-            <!-- Manage Listings -->
+            <!-- Your Listings Section -->
             <section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4">Your Listings 📂</h2>
+                <h2 class="text-2xl font-semibold mb-4">Your Listings 📋</h2>
                 @if ($annonces->isEmpty())
-                    <p class="text-touristay-white opacity-80">You haven’t created any listings yet.</p>
+                    <p class="text-touristay-white opacity-80">You haven’t created any listings yet. Add one above!</p>
                 @else
                     <div class="space-y-4">
                         @foreach ($annonces as $annonce)
@@ -113,11 +110,11 @@
                                     <div>
                                         <h3 class="text-lg font-medium">{{ $annonce->location }}</h3>
                                         <p class="text-sm opacity-80">
-    Type: {{ $annonce->typeDeLogement->name }} | 
-    Price: ${{ $annonce->price }}/night | 
-    Available Until: {{ $annonce->available_until ? $annonce->available_until->format('Y-m-d') : 'N/A' }} | 
-    Equipment: {{ $annonce->equipements->pluck('name')->join(', ') }}
-</p>
+                                            Type: {{ $annonce->typeDeLogement->name }} | 
+                                            Price: ${{ $annonce->price }}/night | 
+                                            Available Until: {{ $annonce->available_until ? $annonce->available_until->format('Y-m-d') : 'N/A' }} | 
+                                            Equipment: {{ $annonce->equipements->pluck('name')->join(', ') }}
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="space-x-2">
@@ -137,11 +134,44 @@
                     </div>
                 @endif
             </section>
+
+            <!-- Bookings Section -->
+            <section class="bg-touristay-dark border border-touristay-green rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4">Bookings for Your Listings 📅</h2>
+                @if ($bookings->isEmpty())
+                    <p class="text-touristay-white opacity-80">Your listings haven’t received any bookings yet.</p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-gray-700">
+                                    <th class="p-3">Tourist Name</th>
+                                    <th class="p-3">Listing</th>
+                                    <th class="p-3">Start Date</th>
+                                    <th class="p-3">End Date</th>
+                                    <th class="p-3">Total Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($bookings as $booking)
+                                    <tr class="border-b border-gray-600">
+                                        <td class="p-3">{{ $booking->user->name }}</td>
+                                        <td class="p-3">{{ $booking->annonce->location }}</td>
+                                        <td class="p-3">{{ $booking->start_date->format('Y-m-d') }}</td>
+                                        <td class="p-3">{{ $booking->end_date->format('Y-m-d') }}</td>
+                                        <td class="p-3">${{ $booking->total_price }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </section>
         </main>
 
         <!-- Footer -->
         <footer class="bg-touristay-red p-4 text-center">
-            <p>© 2025 TouriStay. All rights reserved.</p>
+            <p>© 2025 TouriStay by CodeShogun. All rights reserved.</p>
         </footer>
     </div>
 </body>

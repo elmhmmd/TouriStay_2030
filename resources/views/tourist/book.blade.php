@@ -5,10 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TouriStay - Book Listing</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body {
             background-color: #1A1A1A;
             color: #FFFFFF;
+        }
+        .flatpickr-day.booked {
+            background: #4B5563 !important;
+            color: #9CA3AF !important;
+            cursor: not-allowed !important;
         }
     </style>
 </head>
@@ -55,24 +63,27 @@
 
                 <!-- Booking Form -->
                 <form action="{{ route('tourist.book.store') }}" method="POST">
-    @csrf
-    <input type="hidden" name="annonce_id" value="{{ $listing->id }}">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-            <label for="start_date" class="block text-lg">Start Date</label>
-            <input id="start_date" name="start_date" type="date" value="{{ old('start_date') }}" min="{{ now()->toDateString() }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
-            @error('start_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
-        </div>
-        <div>
-            <label for="end_date" class="block text-lg">End Date</label>
-            <input id="end_date" name="end_date" type="date" value="{{ old('end_date') }}" max="{{ $listing->available_until ? $listing->available_until->toDateString() : '' }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
-            @error('end_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
-        </div>
-    </div>
-    <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
-        Confirm Booking
-    </button>
-</form>
+                    @csrf
+                    <input type="hidden" name="annonce_id" value="{{ $listing->id }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="start_date" class="block text-lg">Start Date</label>
+                            <input id="start_date" name="start_date" type="text" value="{{ old('start_date') }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
+                            @error('start_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label for="end_date" class="block text-lg">End Date</label>
+                            <input id="end_date" name="end_date" type="text" value="{{ old('end_date') }}" class="w-full p-2 rounded-lg bg-gray-800 text-touristay-white border border-touristay-green" required>
+                            @error('end_date') <span class="text-touristay-red">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-lg">Total Price: <span id="total_price">$0.00</span></p>
+                    </div>
+                    <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+                        Confirm Booking
+                    </button>
+                </form>
             </section>
         </main>
 
@@ -81,5 +92,57 @@
             <p>© 2025 TouriStay by CodeShogun. All rights reserved.</p>
         </footer>
     </div>
+
+    <!-- Flatpickr Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Parse booked dates from PHP
+            const bookedDates = @json($bookedDates);
+
+            // Flatpickr configuration for range selection
+            flatpickr("#start_date", {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                maxDate: @json($listing->available_until ? $listing->available_until->toDateString() : null),
+                disable: bookedDates,
+                onChange: function(selectedDates, dateStr, instance) {
+                    endPicker.set('minDate', dateStr); // Update end_date minDate
+                    calculateTotalPrice();
+                },
+            });
+
+            const endPicker = flatpickr("#end_date", {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                maxDate: @json($listing->available_until ? $listing->available_until->toDateString() : null),
+                disable: bookedDates,
+                onChange: function(selectedDates, dateStr, instance) {
+                    calculateTotalPrice();
+                },
+            });
+
+            // Calculate total price dynamically
+            function calculateTotalPrice() {
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+                const pricePerNight = {{ $listing->price }};
+
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24)); // Calculate nights
+
+                    if (nights > 0) {
+                        const totalPrice = (pricePerNight * nights).toFixed(2);
+                        document.getElementById('total_price').innerText = `$${totalPrice}`;
+                    } else {
+                        document.getElementById('total_price').innerText = '$0.00';
+                    }
+                } else {
+                    document.getElementById('total_price').innerText = '$0.00';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
