@@ -10,32 +10,40 @@ use Illuminate\Support\Facades\Storage;
 
 class AnnonceController extends Controller
 {
-    public function index()
-    {
-        $annonces = Annonce::where('user_id', Auth::id())
-            ->with(['typeDeLogement', 'equipements'])
-            ->get();
+   
+public function index()
+{
+    $annonces = Annonce::where('user_id', Auth::id())
+        ->with(['typeDeLogement', 'equipements'])
+        ->get();
 
-        // Fetch bookings for the proprietaire's listings
-        $bookings = Annonce::where('user_id', Auth::id())
-            ->with(['bookings.user'])
-            ->get()
-            ->flatMap->bookings;
+    // Fetch bookings for the proprietaire's listings
+    $bookings = Annonce::where('user_id', Auth::id())
+        ->with(['bookings.user'])
+        ->get()
+        ->flatMap->bookings;
 
-        // Fetch notifications for the proprietaire
-        $user = Auth::user();
-        $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
-        $unreadNotifications = $user->unreadNotifications()->orderBy('created_at', 'desc')->get();
+    // Fetch notifications for the proprietaire
+    $user = Auth::user();
+    $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
+    $unreadNotifications = $user->unreadNotifications()->orderBy('created_at', 'desc')->get();
 
-        $equipements = Equipement::all();
-        $types = TypeDeLogement::all();
+    $equipements = Equipement::all();
+    $types = TypeDeLogement::all();
 
-        if (Auth::user()->role->name === 'admin') {
-            return view('admin.dashboard', compact('annonces', 'equipements', 'types'));
-        }
+    if (Auth::user()->role->name === 'admin') {
+        // Admin-specific data
+        $totalUsers = \App\Models\User::count();
+        $totalBookings = \App\Models\Booking::count();
+        $activeListings = \App\Models\Annonce::where('available_until', '>=', now()->toDateString())->count();
+        $allListings = \App\Models\Annonce::with(['user', 'typeDeLogement'])->get();
+        $recentBookings = \App\Models\Booking::with(['user', 'annonce'])->orderBy('created_at', 'desc')->take(10)->get();
 
-        return view('proprietaire.dashboard', compact('annonces', 'equipements', 'types', 'bookings', 'notifications', 'unreadNotifications'));
+        return view('admin.dashboard', compact('annonces', 'equipements', 'types', 'totalUsers', 'totalBookings', 'activeListings', 'allListings', 'recentBookings'));
     }
+
+    return view('proprietaire.dashboard', compact('annonces', 'equipements', 'types', 'bookings', 'notifications', 'unreadNotifications'));
+}
 
     public function markNotificationAsRead($notificationId)
     {
@@ -113,13 +121,18 @@ class AnnonceController extends Controller
         return redirect()->route('proprietaire.dashboard')->with('success', 'Listing updated successfully.');
     }
 
-    public function destroy($id)
-    {
-        $annonce = Annonce::where('user_id', Auth::id())->findOrFail($id);
-        if ($annonce->image) {
-            Storage::disk('public')->delete($annonce->image);
-        }
-        $annonce->delete();
-        return redirect()->back()->with('success', 'Listing deleted successfully.');
+   // app/Http/Controllers/AnnonceController.php
+public function destroy($id)
+{
+    $annonce = Auth::user()->role->name === 'admin'
+        ? Annonce::findOrFail($id) // Admin can delete any listing
+        : Annonce::where('user_id', Auth::id())->findOrFail($id); // Proprietaire restricted to own listings
+
+    if ($annonce->image) {
+        Storage::disk('public')->delete($annonce->image);
     }
+    $annonce->delete();
+
+    return redirect()->route('admin.dashboard')->with('success', 'Listing deleted successfully.');
+}
 }
