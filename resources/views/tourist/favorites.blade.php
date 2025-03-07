@@ -10,15 +10,19 @@
 <body class="bg-touristay-dark text-touristay-white">
     <div class="min-h-screen flex flex-col">
         <!-- Header -->
-        <header class="bg-touristay-red p-4 shadow-lg">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <h1 class="text-3xl font-bold">TouriStay</h1>
-                <div>
-                    <a href="{{ route('tourist.dashboard') }}" class="mr-4 text-touristay-green hover:underline">Dashboard</a>
-                    <a href="{{ route('logout') }}" class="text-gray-600 hover:underline">Log Out</a>
-                </div>
-            </div>
-        </header>
+       <!-- resources/views/tourist/favorites.blade.php -->
+<header class="bg-touristay-red p-4 shadow-lg">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 class="text-3xl font-bold">TouriStay</h1>
+        <div>
+            <a href="{{ route('tourist.dashboard') }}" class="mr-4 text-touristay-green hover:underline">Dashboard</a>
+            <form action="{{ route('logout') }}" method="POST" class="inline">
+                @csrf
+                <button type="submit" class="text-gray-600 hover:underline">Log Out</button>
+            </form>
+        </div>
+    </div>
+</header>
 
         <!-- Main Content -->
         <main class="flex-grow max-w-7xl mx-auto p-6 space-y-6">
