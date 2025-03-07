@@ -150,15 +150,15 @@
                         @error('available_until') <span class="text-touristay-red">{{ $message }}</span> @enderror
                     </div>
                     <div class="mb-4">
-                        <label class="block text-lg">Equipment</label>
-                        @foreach ($equipements as $equipement)
-                            <label class="inline-flex items-center mr-4">
-                                <input type="checkbox" name="equipements[]" value="{{ $equipement->id }}" {{ in_array($equipement->id, old('equipements', [])) ? 'checked' : '' }} class="mr-2">
-                                {{ $equipement->name }}
-                            </label>
-                        @endforeach
-                        @error('equipements') <span class="text-touristay-red">{{ $message }}</span> @enderror
-                    </div>
+    <label class="block text-lg">Equipment</label>
+    @foreach ($equipements as $equipement)
+        <label class="inline-flex items-center mr-4">
+            <input type="checkbox" name="equipements[]" value="{{ $equipement->id }}" {{ in_array($equipement->id, old('equipements', [])) ? 'checked' : '' }} class="mr-2">
+            {{ $equipement->name }}
+        </label>
+    @endforeach
+    @error('equipements') <span class="text-touristay-red">{{ $message }}</span> @enderror
+</div>
                     <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
                         Publish Listing
                     </button>

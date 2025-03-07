@@ -96,32 +96,60 @@
     <!-- Flatpickr Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Parse booked dates from PHP
             const bookedDates = @json($bookedDates);
+            let startPicker, endPicker;
 
-            // Flatpickr configuration for range selection
-            flatpickr("#start_date", {
+            startPicker = flatpickr("#start_date", {
                 dateFormat: "Y-m-d",
                 minDate: "today",
                 maxDate: @json($listing->available_until ? $listing->available_until->toDateString() : null),
                 disable: bookedDates,
                 onChange: function(selectedDates, dateStr, instance) {
-                    endPicker.set('minDate', dateStr); // Update end_date minDate
+                    endPicker.set('minDate', dateStr);
+                    validateDateRange();
                     calculateTotalPrice();
                 },
             });
 
-            const endPicker = flatpickr("#end_date", {
+            endPicker = flatpickr("#end_date", {
                 dateFormat: "Y-m-d",
                 minDate: "today",
                 maxDate: @json($listing->available_until ? $listing->available_until->toDateString() : null),
                 disable: bookedDates,
                 onChange: function(selectedDates, dateStr, instance) {
+                    validateDateRange();
                     calculateTotalPrice();
                 },
             });
 
-            // Calculate total price dynamically
+            function validateDateRange() {
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    let current = new Date(start);
+                    let hasBookedDate = false;
+
+                    while (current <= end) {
+                        const dateString = current.toISOString().split('T')[0];
+                        if (bookedDates.includes(dateString)) {
+                            hasBookedDate = true;
+                            break;
+                        }
+                        current.setDate(current.getDate() + 1);
+                    }
+
+                    if (hasBookedDate) {
+                        alert('The selected range includes booked dates. Please choose a different range.');
+                        startPicker.clear();
+                        endPicker.clear();
+                        document.getElementById('total_price').innerText = '$0.00';
+                    }
+                }
+            }
+
             function calculateTotalPrice() {
                 const startDate = document.getElementById('start_date').value;
                 const endDate = document.getElementById('end_date').value;
@@ -130,7 +158,7 @@
                 if (startDate && endDate) {
                     const start = new Date(startDate);
                     const end = new Date(endDate);
-                    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24)); // Calculate nights
+                    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 
                     if (nights > 0) {
                         const totalPrice = (pricePerNight * nights).toFixed(2);

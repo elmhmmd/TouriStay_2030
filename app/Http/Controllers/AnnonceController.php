@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class AnnonceController extends Controller
 {
-   
+                       
 public function index()
 {
     $annonces = Annonce::where('user_id', Auth::id())
@@ -60,28 +60,30 @@ public function index()
             'price' => 'required|numeric|min:0',
             'type_de_logement_id' => 'required|exists:type_de_logements,id',
             'available_until' => 'required|date|after_or_equal:today',
-            'equipements' => 'required|array',
+            'equipements' => 'nullable|array', // Changed to nullable
             'equipements.*' => 'exists:equipements,id',
             'image' => 'nullable|image',
         ]);
-
-       
-
+    
         $data = $request->only(['location', 'price', 'type_de_logement_id', 'available_until']);
         $data['user_id'] = Auth::id();
-
-        // Handle image upload
+    
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('annonces', 'public');
             $data['image'] = $path;
         }
-
+    
         $annonce = Annonce::create($data);
-        $annonce->equipements()->sync($request->equipements);
-
+    
+        // Sync equipements only if provided
+        if ($request->has('equipements')) {
+            $annonce->equipements()->sync($request->equipements);
+        } else {
+            $annonce->equipements()->detach(); // Ensure no equipements if none selected
+        }
+    
         return redirect()->back()->with('success', 'Listing created successfully.');
     }
-
     public function edit($id)
     {
         $annonce = Annonce::where('user_id', Auth::id())->with(['typeDeLogement', 'equipements'])->findOrFail($id);
@@ -121,7 +123,7 @@ public function index()
         return redirect()->route('proprietaire.dashboard')->with('success', 'Listing updated successfully.');
     }
 
-   // app/Http/Controllers/AnnonceController.php
+
 public function destroy($id)
 {
     $annonce = Auth::user()->role->name === 'admin'

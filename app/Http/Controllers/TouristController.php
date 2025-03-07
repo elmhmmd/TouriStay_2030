@@ -131,6 +131,7 @@ public function processPayment(Request $request, $bookingId)
     }
 }
 
+
 public function storeBooking(Request $request)
 {
     $request->validate([
@@ -145,7 +146,36 @@ public function storeBooking(Request $request)
         return redirect()->back()->withErrors(['end_date' => 'End date cannot be after the listing\'s available until date.']);
     }
 
-    // Check for overlapping bookings
+    // Fetch booked dates for the listing
+    $bookings = Booking::where('annonce_id', $request->annonce_id)
+        ->where('end_date', '>=', now()->toDateString())
+        ->where('start_date', '<=', $listing->available_until)
+        ->where('status', 'confirmed')
+        ->get();
+
+    $bookedDates = [];
+    foreach ($bookings as $booking) {
+        $start = \Carbon\Carbon::parse($booking->start_date);
+        $end = \Carbon\Carbon::parse($booking->end_date);
+        while ($start->lte($end)) {
+            $bookedDates[] = $start->toDateString();
+            $start->addDay();
+        }
+    }
+    $bookedDates = array_unique($bookedDates);
+
+    // Check if any date in the selected range is booked
+    $start = \Carbon\Carbon::parse($request->start_date);
+    $end = \Carbon\Carbon::parse($request->end_date);
+    $current = $start->copy();
+    while ($current <= $end) {
+        if (in_array($current->toDateString(), $bookedDates)) {
+            return redirect()->back()->withErrors(['start_date' => 'The selected range includes booked dates.']);
+        }
+        $current->addDay();
+    }
+
+    // Check for overlapping bookings (existing logic)
     $existingBookings = Booking::where('annonce_id', $request->annonce_id)
         ->where('status', 'confirmed')
         ->where(function ($query) use ($request) {
@@ -163,8 +193,6 @@ public function storeBooking(Request $request)
     }
 
     // Calculate total price
-    $start = \Carbon\Carbon::parse($request->start_date);
-    $end = \Carbon\Carbon::parse($request->end_date);
     $nights = $start->diffInDays($end, true);
     if ($start->gt($end)) {
         return redirect()->back()->withErrors(['end_date' => 'End date must be after start date.']);
@@ -179,11 +207,10 @@ public function storeBooking(Request $request)
         'total_price' => $totalPrice,
     ]);
 
-    // Redirect to payment page
     return redirect()->route('tourist.payment', $booking->id);
 }
 
-// app/Http/Controllers/TouristController.php
+
 public function addFavorite($id)
 {
     $annonce = Annonce::findOrFail($id);
