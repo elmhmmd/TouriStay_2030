@@ -53,4 +53,10 @@ public function bookings()
     {
         return $this->hasMany(Booking::class);
     }
+
+    
+public function favoriteAnnounces()
+{
+    return $this->belongsToMany(Annonce::class, 'favorites', 'user_id', 'annonce_id');
+}
 }

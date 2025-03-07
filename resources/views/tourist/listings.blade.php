@@ -54,31 +54,37 @@
                     <p class="text-touristay-white opacity-80">No listings match your search.</p>
                 @else
                     <div class="space-y-4">
-                        @foreach ($listings as $listing)
-                            <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg">
-                                <div class="flex items-center space-x-4">
-                                    @if ($listing->image)
-                                        <img src="{{ Storage::url($listing->image) }}" alt="{{ $listing->location }}" class="w-16 h-16 object-cover rounded-lg">
-                                    @else
-                                        <div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center text-sm">No Image</div>
-                                    @endif
-                                    <div>
-                                        <h3 class="text-lg font-medium">{{ $listing->location }}</h3>
-                                        <p class="text-sm opacity-80">
-                                            Type: {{ $listing->typeDeLogement->name }} | 
-                                            Price: ${{ $listing->price }}/night | 
-                                            Available Until: {{ $listing->available_until ? $listing->available_until->format('Y-m-d') : 'N/A' }} | 
-                                            Equipment: {{ $listing->equipements->pluck('name')->join(', ') }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="space-x-2">
-                                <a href="{{ route('tourist.book.form', $listing->id) }}" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
-    Book Now
-</a>
-                                </div>
-                            </div>
-                        @endforeach
+                    @foreach ($listings as $listing)
+    <div class="flex justify-between items-center bg-gray-800 p-4 rounded-lg">
+        <div class="flex items-center space-x-4">
+            @if ($listing->image)
+                <img src="{{ Storage::url($listing->image) }}" alt="{{ $listing->location }}" class="w-16 h-16 object-cover rounded-lg">
+            @else
+                <div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center text-sm">No Image</div>
+            @endif
+            <div>
+                <h3 class="text-lg font-medium">{{ $listing->location }}</h3>
+                <p class="text-sm opacity-80">
+                    Type: {{ $listing->typeDeLogement->name }} | 
+                    Price: ${{ $listing->price }}/night | 
+                    Available Until: {{ $listing->available_until ? $listing->available_until->format('Y-m-d') : 'N/A' }} | 
+                    Equipment: {{ $listing->equipements->pluck('name')->join(', ') }}
+                </p>
+            </div>
+        </div>
+        <div class="space-x-2">
+            <a href="{{ route('tourist.book.form', $listing->id) }}" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+                Book Now
+            </a>
+            <form action="{{ route('tourist.favorites.add', $listing->id) }}" method="POST" class="inline">
+                @csrf
+                <button type="submit" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
+                    Add to Favorites
+                </button>
+            </form>
+        </div>
+    </div>
+@endforeach
                     </div>
                     <!-- Pagination Links -->
                     <div class="mt-6">

@@ -183,4 +183,32 @@ public function storeBooking(Request $request)
     return redirect()->route('tourist.payment', $booking->id);
 }
 
+// app/Http/Controllers/TouristController.php
+public function addFavorite($id)
+{
+    $annonce = Annonce::findOrFail($id);
+    $user = Auth::user();
+
+    if (!$user->favoriteAnnounces()->where('annonce_id', $id)->exists()) {
+        $user->favoriteAnnounces()->attach($id);
+    }
+
+    return redirect()->back()->with('success', 'Added to favorites!');
+}
+
+public function favorites()
+{
+    $user = Auth::user()->load('favoriteAnnounces.typeDeLogement', 'favoriteAnnounces.equipements');
+    return view('tourist.favorites', compact('user'));
+}
+
+public function removeFavorite($id)
+{
+    $user = Auth::user();
+    $user->favoriteAnnounces()->detach($id);
+
+    return redirect()->route('tourist.favorites')->with('success', 'Removed from favorites!');
+}
+
+
 }

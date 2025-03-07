@@ -32,6 +32,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/tourist/payment/{booking}', [App\Http\Controllers\TouristController::class, 'payment'])->name('tourist.payment');
     Route::post('/tourist/payment/{booking}/process', [App\Http\Controllers\TouristController::class, 'processPayment'])->name('tourist.payment.process');
     Route::get('/tourist/booking/{booking}/invoice', [App\Http\Controllers\TouristController::class, 'downloadInvoice'])->name('tourist.invoice.download');
+    Route::post('/tourist/favorites/{id}', [App\Http\Controllers\TouristController::class, 'addFavorite'])->name('tourist.favorites.add');
+    Route::get('/tourist/favorites', [App\Http\Controllers\TouristController::class, 'favorites'])->name('tourist.favorites');
+    Route::delete('/tourist/favorites/{id}', [App\Http\Controllers\TouristController::class, 'removeFavorite'])->name('tourist.favorites.remove');
 
     // Proprietaire Routes
     Route::post('/proprietaire/notifications/{id}/read', [App\Http\Controllers\AnnonceController::class, 'markNotificationAsRead'])->name('proprietaire.notifications.read');
