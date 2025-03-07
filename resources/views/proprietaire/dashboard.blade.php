@@ -10,6 +10,46 @@
             background-color: #1A1A1A;
             color: #FFFFFF;
         }
+        .notification-bell {
+            position: relative;
+        }
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #EF4444;
+            color: #FFFFFF;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            line-height: 1;
+        }
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #2D2D2D;
+            border: 1px solid #10B981;
+            border-radius: 8px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .notification-dropdown.show {
+            display: block;
+        }
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #4B5563;
+        }
+        .notification-item.unread {
+            background-color: #374151;
+        }
+        .notification-item:hover {
+            background-color: #4B5563;
+        }
     </style>
 </head>
 <body class="bg-touristay-dark text-touristay-white">
@@ -19,6 +59,39 @@
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <h1 class="text-3xl font-bold tracking-wider">TouriStay Proprietaire</h1>
                 <div class="flex items-center space-x-4">
+                    <!-- Notification Bell -->
+                    <div class="notification-bell">
+                        <button id="notification-toggle" class="relative text-touristay-white focus:outline-none">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            @if ($unreadNotifications->count() > 0)
+                                <span class="notification-count">{{ $unreadNotifications->count() }}</span>
+                            @endif
+                        </button>
+                        <div id="notification-dropdown" class="notification-dropdown">
+                            @if ($notifications->isEmpty())
+                                <div class="p-4 text-center text-touristay-white opacity-80">No notifications yet.</div>
+                            @else
+                                @foreach ($notifications as $notification)
+                                    <div class="notification-item {{ is_null($notification->read_at) ? 'unread' : '' }}">
+                                        <div class="text-sm">
+                                            <strong>{{ $notification->data['tourist_name'] }}</strong> booked your listing at <strong>{{ $notification->data['listing_location'] }}</strong> from {{ $notification->data['start_date'] }} to {{ $notification->data['end_date'] }} for ${{ $notification->data['total_price'] }}.
+                                        </div>
+                                        <div class="text-xs opacity-80 mt-1">
+                                            {{ \Carbon\Carbon::parse($notification->created_at)->diffForHumans() }}
+                                        </div>
+                                        @if (is_null($notification->read_at))
+                                            <form action="{{ route('proprietaire.notifications.read', $notification->id) }}" method="POST" class="mt-1">
+                                                @csrf
+                                                <button type="submit" class="text-touristay-green text-xs hover:underline">Mark as Read</button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
                     <a href="/profile" class="bg-touristay-green hover:bg-opacity-80 text-touristay-dark font-semibold px-4 py-2 rounded-lg transition duration-300">
                         My Profile
                     </a>
@@ -174,5 +247,66 @@
             <p>© 2025 TouriStay by CodeShogun. All rights reserved.</p>
         </footer>
     </div>
+
+    <!-- Laravel Echo Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Toggle notification dropdown
+            const toggleButton = document.getElementById('notification-toggle');
+            const dropdown = document.getElementById('notification-dropdown');
+
+            toggleButton.addEventListener('click', function () {
+                dropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (event) {
+                if (!toggleButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // Listen for new notifications using Laravel Echo
+            Echo.channel('proprietaire.{{ auth()->id() }}')
+                .listen('Illuminate\\Notifications\\Events\\BroadcastNotificationCreated', (e) => {
+                    const notification = `
+                        <div class="notification-item unread">
+                            <div class="text-sm">
+                                <strong>${e.tourist_name}</strong> booked your listing at <strong>${e.listing_location}</strong> from ${e.start_date} to ${e.end_date} for $${e.total_price}.
+                            </div>
+                            <div class="text-xs opacity-80 mt-1">
+                                Just now
+                            </div>
+                            <form action="/proprietaire/notifications/${e.id}/read" method="POST" class="mt-1">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="text-touristay-green text-xs hover:underline">Mark as Read</button>
+                            </form>
+                        </div>
+                    `;
+
+                    dropdown.insertAdjacentHTML('afterbegin', notification);
+                    updateNotificationCount(1);
+                });
+
+            // Update notification count
+            function updateNotificationCount(change) {
+                let countElement = document.querySelector('.notification-count');
+                let currentCount = countElement ? parseInt(countElement.innerText) : 0;
+                let newCount = currentCount + change;
+
+                if (newCount > 0) {
+                    if (!countElement) {
+                        const badge = document.createElement('span');
+                        badge.className = 'notification-count';
+                        toggleButton.appendChild(badge);
+                        countElement = badge;
+                    }
+                    countElement.innerText = newCount;
+                } else if (countElement) {
+                    countElement.remove();
+                }
+            }
+        });
+    </script>
 </body>
 </html>

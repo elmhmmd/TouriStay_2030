@@ -1,17 +1,13 @@
-<?
+<?php
+
 namespace App\Notifications;
 
 use App\Models\Booking;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
-class BookingCreatedNotification extends Notification implements ShouldBroadcast
+class BookingCreatedNotification extends Notification
 {
-    use Queueable;
-
     protected $booking;
 
     /**
@@ -54,6 +50,7 @@ class BookingCreatedNotification extends Notification implements ShouldBroadcast
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
+            'id' => $this->id, // Include notification ID for marking as read
             'tourist_name' => $this->booking->user->name,
             'listing_location' => $this->booking->annonce->location,
             'start_date' => $this->booking->start_date->format('Y-m-d'),
@@ -67,6 +64,6 @@ class BookingCreatedNotification extends Notification implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new Channel('proprietaire.' . $this->booking->annonce->user_id);
+        return new \Illuminate\Broadcasting\Channel('proprietaire.' . $this->booking->annonce->user_id);
     }
 }

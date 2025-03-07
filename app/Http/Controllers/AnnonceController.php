@@ -11,31 +11,40 @@ use Illuminate\Support\Facades\Storage;
 class AnnonceController extends Controller
 {
     public function index()
-{
-    $annonces = Annonce::where('user_id', Auth::id())
-        ->with(['typeDeLogement', 'equipements'])
-        ->get();
+    {
+        $annonces = Annonce::where('user_id', Auth::id())
+            ->with(['typeDeLogement', 'equipements'])
+            ->get();
 
-    // Fetch bookings for the proprietaire's listings
-    $bookings = Annonce::where('user_id', Auth::id())
-        ->with(['bookings.user'])
-        ->get()
-        ->flatMap->bookings;
+        // Fetch bookings for the proprietaire's listings
+        $bookings = Annonce::where('user_id', Auth::id())
+            ->with(['bookings.user'])
+            ->get()
+            ->flatMap->bookings;
 
-    // Fetch notifications for the proprietaire
-    $user = Auth::user();
-    $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
-    $unreadNotifications = $user->unreadNotifications()->orderBy('created_at', 'desc')->get();
+        // Fetch notifications for the proprietaire
+        $user = Auth::user();
+        $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
+        $unreadNotifications = $user->unreadNotifications()->orderBy('created_at', 'desc')->get();
 
-    $equipements = Equipement::all();
-    $types = TypeDeLogement::all();
+        $equipements = Equipement::all();
+        $types = TypeDeLogement::all();
 
-    if (Auth::user()->role->name === 'admin') {
-        return view('dashboards.admin', compact('annonces', 'equipements', 'types'));
+        if (Auth::user()->role->name === 'admin') {
+            return view('admin.dashboard', compact('annonces', 'equipements', 'types'));
+        }
+
+        return view('proprietaire.dashboard', compact('annonces', 'equipements', 'types', 'bookings', 'notifications', 'unreadNotifications'));
     }
 
-    return view('dashboards.proprietaire', compact('annonces', 'equipements', 'types', 'bookings', 'notifications', 'unreadNotifications'));
-}
+    public function markNotificationAsRead($notificationId)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($notificationId);
+        $notification->markAsRead();
+
+        return redirect()->back()->with('success', 'Notification marked as read.');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -71,7 +80,7 @@ class AnnonceController extends Controller
         $equipements = Equipement::all();
         $types = TypeDeLogement::all();
         return view('proprietaire.annonce_edit', compact('annonce', 'equipements', 'types'));
-    }
+    } 
 
     public function update(Request $request, $id)
     {
